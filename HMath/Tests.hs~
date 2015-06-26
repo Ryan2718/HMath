@@ -1,6 +1,0 @@
-{-|
-Description : Unit Tests
-Copyright   : (c) Ryan Forsyth, 2015
-|-}
-module Tests where
-
