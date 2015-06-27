@@ -8,12 +8,13 @@ module Matrix
          Matrix
 
          -- * Construction
-       , fromArray
        , fromList
 
          -- * Details
        , numRows
        , numCols
+       , dimensions
+       , getElem
 
          -- * Manipulations
        , add
@@ -21,33 +22,18 @@ module Matrix
        , scalarMultiply  
        ) where
 
-import Data.Array (Array(..), array, bounds, elems, listArray)
-
 -- Types ----------------------------------------------------------------------
 
 -- | Matrix Type
-data Matrix n = Matrix { matrix :: Array (Int, Int) n } deriving Eq
+data Matrix n = Matrix { matrix :: [[n]] } deriving Eq
 
 instance (Show n) => Show (Matrix n) where
   show mat =
-    let m = numRows mat
-        n = numCols mat
-        list = elems $ matrix mat
-        nested = splitEvery n list
-        strings = map (\sublist -> show sublist ++ "\n") nested
+    let strings = map (\sublist -> show sublist ++ "\n") (matrix mat)
     in "\n" ++ foldl (++) "" strings
 
-instance (Num n) => Num (Matrix n) where
-  (+) a b = add a b
-  (*) a b = multiply a b
-  abs a = fmap abs a -- absolute value of every entry
-  signum a = fmap signum a -- signum of every entry
-  fromInteger a = Matrix $ array ((1,1), (1,1)) [((1,1), (fromInteger a))]
-                  -- 1 x 1 matrix
-  negate a = fmap ((-1)*) a -- negate every entry
-
 instance Functor Matrix where
-  fmap f a = Matrix $ fmap f $ matrix a
+  fmap f a = Matrix $ fmap (fmap f) $ matrix a
 
 splitEvery :: Int -> [a] -> [[a]]
 splitEvery _ [] = []
@@ -56,45 +42,58 @@ splitEvery n list =
   in x:(splitEvery n xs)
 
 -- Construction ---------------------------------------------------------------
-     
--- | Given a two-dimensional array, construct a Matrix
-fromArray :: (Num n) => Array (Int, Int) n -> Maybe (Matrix n)
-fromArray a = let (lower, upper) = bounds a
-              in if lower == (1,1)
-                 then Just $ Matrix a
-                 else Nothing     
 
 -- | Given a nested list, construct a Matrix
 fromList :: (Num n) => [[n]] -> Maybe (Matrix n)
 fromList [] = Nothing
-fromList [[]] = Nothing
 fromList list@(x:_) =
   let m = length list -- Number of rows
       n = length x -- Number of columns
-  in Just $ Matrix $ listArray ((1, 1), (m, n)) $ concat list
+  in if (sameLength list) && (m >= 1) && (n >= 1)
+     then Just $ Matrix list
+     else Nothing
+
+sameLength :: [[a]] -> Bool
+sameLength [] = True
+sameLength list@(x:_) = let lengths = map (\e -> length e) list
+                        in lengths == replicate (length list) (length x)
 
 -- Details --------------------------------------------------------------------
 
 -- | The number of rows, m
 numRows :: Matrix n -> Int
-numRows mat =
-  let ((_,_), (m,_)) = bounds $ matrix mat
-  in m
+numRows = length . matrix
      
 -- | The number of columns, n
 numCols :: Matrix n -> Int
 numCols mat =
-  let ((_,_), (_,n)) = bounds $ matrix mat
-  in n
+  case matrix mat of
+   [] -> 0
+   x:xs -> length x
+
+-- | Dimensions, m x n
+dimensions :: Matrix n -> (Int, Int)
+dimensions mat = (numRows mat, numCols mat)
+
+-- | Access an element. Matrices are 1-indexed!
+getElem :: (Int, Int) -> Matrix n -> Maybe n
+getElem (i, j) mat = if (1 <= i) && (i <= numRows mat) &&
+                        (1 <= j) && (j <= numCols mat)
+                        then Just $ (matrix mat) !! (i - 1) !! (j - 1)
+                        else Nothing
 
 -- Manipulations --------------------------------------------------------------
 
 -- | Add two matrices
-add :: Matrix n -> Matrix n -> Matrix n
-add a b = undefined
+add :: (Num n) => Matrix n -> Matrix n -> Maybe (Matrix n)
+add a b = if dimensions a == dimensions b
+          then let alist = matrix a
+                   blist = matrix b
+               in Just $ Matrix $ zipWith (zipWith (+)) alist blist
+          else Nothing
 
 -- | Multiply two matrices
-multiply :: Matrix n -> Matrix n -> Matrix n
+multiply :: Matrix n -> Matrix n -> (Matrix n)
 multiply a b = undefined
 
 -- | Multiply a matrix by a scalar
