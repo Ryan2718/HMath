@@ -2,7 +2,7 @@
 
 Mathematical tools for Haskell.
 
-## HMath.AbstractAlgebra
+## HMath.Algebra
 
 Tools for abstract algebra.
 
