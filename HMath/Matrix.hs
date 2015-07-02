@@ -19,8 +19,11 @@ module Matrix
          -- * Manipulations
        , add
        , multiply
-       , scalarMultiply  
+       , scalarMultiply
+       , transpose
        ) where
+
+import qualified Data.List as L
 
 -- Types ----------------------------------------------------------------------
 
@@ -33,13 +36,7 @@ instance (Show n) => Show (Matrix n) where
     in "\n" ++ foldl (++) "" strings
 
 instance Functor Matrix where
-  fmap f a = Matrix $ fmap (fmap f) $ matrix a
-
-splitEvery :: Int -> [a] -> [[a]]
-splitEvery _ [] = []
-splitEvery n list =
-  let (x, xs) = splitAt n list
-  in x:(splitEvery n xs)
+  fmap f a = Matrix $ fmap (fmap f) $ matrix a 
 
 -- Construction ---------------------------------------------------------------
 
@@ -57,6 +54,10 @@ sameLength :: [[a]] -> Bool
 sameLength [] = True
 sameLength list@(x:_) = let lengths = map (\e -> length e) list
                         in lengths == replicate (length list) (length x)
+
+-- | m x n zero matrix
+zeros :: (Num n) => Int -> Int -> Maybe (Matrix n)
+zeros m n = fromList $ replicate m $ replicate n 0 
 
 -- Details --------------------------------------------------------------------
 
@@ -93,9 +94,15 @@ add a b = if dimensions a == dimensions b
           else Nothing
 
 -- | Multiply two matrices
-multiply :: Matrix n -> Matrix n -> (Matrix n)
-multiply a b = undefined
+multiply :: Matrix n -> Matrix n -> Maybe (Matrix n)
+multiply a b = if numCols a == numRows b
+               then Just $ Matrix $ undefined
+               else Nothing
 
 -- | Multiply a matrix by a scalar
 scalarMultiply :: (Num n) => n -> Matrix n -> Matrix n
 scalarMultiply c mat = fmap (c*) mat
+
+-- | Transpose a matrix
+transpose :: Matrix n -> Matrix n
+transpose = Matrix . L.transpose . matrix

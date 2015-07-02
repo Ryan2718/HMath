@@ -2,6 +2,10 @@
 
 Mathematical tools for Haskell.
 
+## HMath.AbstractAlgebra
+
+Tools for abstract algebra.
+
 ## HMath.Fraction
 
 Tools for working with fractions.
